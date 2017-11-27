@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+    <meta charset="utf-8">
+    <title>JS Bin</title>
+    <style>
+        .pictures {
+            padding: 10px 20px;
+            width: 1000px;
+            margin: 0 auto;
+        }
+
+        .img-row {
+            margin-bottom: 10px;
+        }
+
+        .img-row::after {
+            content: "";
+            display: block;
+            clear: both;
+        }
+
+        .img-box {
+            float: left;
+        }
+
+        .img-box img {
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="pictures">
+    </div>
+    <script>    
+        function Barrel($ct) {
+            this.$ct = $ct;
+            this.rowList = [];
+            this.marginRight = 10;
+            this.imgNum = 20;
+            this.baseHeight = 150;
+            this.loadImg();
+            this.imgIndex = 0;
+        }
+        Barrel.prototype = {
+            getImgUrls: function (num) {
+                var urls = [];
+                for (i = 0; i < num; i++) {
+                    var height = Math.ceil(Math.random() * 100 + 200);
+                    var width = Math.ceil(Math.random() * 100 + 300);
+                    urls.push("https://unsplash.it/" + width + "/" + height);
+                }
+                return urls
+            },
+            loadImg: function () {
+                var _this = this;
+                var imgs = this.getImgUrls(_this.imgNum);
+                $.each(imgs, function (index, url) {
+                    var img = new Image();
+                    img.src = url;
+                    img.onload = function () {
+                        var originWidth = img.width;
+                        var originHeight = img.height;
+                        var ratio = originWidth / originHeight;
+                        var imgInfo = {
+                            target: $(this),
+                            width: _this.baseHeight * ratio,
+                            height: _this.baseHeight
+                        }
+                        _this.imgIndex++;
+                        _this.render(imgInfo);
+                    }
+                })
+            },
+            render: function (imgInfo) {
+                var clientWidth = this.$ct.width();
+                var rowWidth = 0;
+                var newRowHeight = 0;
+                lastImgInfo = imgInfo;
+                this.rowList.push(imgInfo);
+                for (i = 0; i < this.rowList.length; i++) {
+                    rowWidth += this.rowList[i].width + this.marginRight;
+                }
+                if (rowWidth > clientWidth) {
+                    this.rowList.pop();
+                    rowWidth -= lastImgInfo.width + this.marginRight;
+                    newRowHeight = this.baseHeight * clientWidth / rowWidth
+                    this.creatRow(newRowHeight);
+                    this.rowList = [];
+                    this.rowList.push(lastImgInfo);
+                }
+                console.log(this.imgIndex)
+                if ((this.imgIndex == this.imgNum) && (rowWidth < clientWidth)) {
+
+                    newRowHeight = this.baseHeight * clientWidth / rowWidth
+                    this.creatRow(newRowHeight);
+                }
+            },
+            creatRow: function (newRowHeight) {
+                var _this = this;
+                var $rowCt = $('<div class="img-row"></div>');
+                $.each(this.rowList, function (index, imgInfo) {
+                    var $imgCt = $('<div class = "img-box"></div>');
+                    var $img = imgInfo.target;
+                    var newImgWidth = (imgInfo.width + _this.marginRight) * (newRowHeight / _this.baseHeight) - _this.marginRight;
+                    $img.height(newRowHeight);
+                    $img.width(newImgWidth);
+                    $imgCt.append($img)
+                    $rowCt.append($imgCt)
+                })
+                this.$ct.append($rowCt);
+            }
+        }
+        var barrel = new Barrel($('.pictures'));
+    </script>
+</body>
+
+</html>
